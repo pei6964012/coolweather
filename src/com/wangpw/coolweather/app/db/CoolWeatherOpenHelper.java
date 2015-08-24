@@ -23,7 +23,7 @@ public class CoolWeatherOpenHelper extends SQLiteOpenHelper {
 			+"id integer primary key autoincrement, "
 			+"city_name text, "
 			+"city_code text, "
-			+"province_code text)";
+			+"province_id integer)";
 	/*
 	 * 	CountyΩ®±Ì”Ôæ‰
 	 */
