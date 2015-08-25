@@ -14,7 +14,10 @@ import com.wangpw.coolweather.app.util.Utility;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -77,6 +80,14 @@ public class ChooseAreaActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		if(prefs.getBoolean("city_selected", false)){
+			Intent intent = new Intent(this, WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
 		listView = (ListView) findViewById(R.id.lvArea);
@@ -97,8 +108,12 @@ public class ChooseAreaActivity extends Activity {
 					selectedCity = cityList.get(index);
 					queryCounties();
 				}else if(currentLevel == LEVEL_COUNTY){
-					Toast.makeText(ChooseAreaActivity.this
-							, "当前行政区已为最小", Toast.LENGTH_LONG).show();
+					String countyName = countyList.get(index).getCountyName();
+					Intent intent = new Intent(ChooseAreaActivity.this
+							,WeatherActivity.class);
+					intent.putExtra("county_name", countyName);
+					startActivity(intent);
+					finish();
 				}
 			}
 
@@ -212,8 +227,22 @@ public class ChooseAreaActivity extends Activity {
 						@Override
 						public void run() {
 							closeProgressDialog();
-							Toast.makeText(ChooseAreaActivity.this
-									, "当前行政区可能已为最小", Toast.LENGTH_LONG).show();
+							//当前行政区域已经为最小，尝试直接获取省、市级信息
+							if (currentLevel == LEVEL_PROVINCE) {
+								String countyName = selectedProvince.getProvinceName();
+								Intent intent = new Intent(ChooseAreaActivity.this
+										,WeatherActivity.class);
+								intent.putExtra("county_name", countyName);
+								startActivity(intent);
+								finish();
+							} else if (currentLevel == LEVEL_CITY) {
+								String countyName = selectedCity.getCityName();
+								Intent intent = new Intent(ChooseAreaActivity.this
+										,WeatherActivity.class);
+								intent.putExtra("county_name", countyName);
+								startActivity(intent);
+								finish();
+							}
 						}
 					});
 				}
