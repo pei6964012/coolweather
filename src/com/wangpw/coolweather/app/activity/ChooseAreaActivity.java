@@ -12,6 +12,7 @@ import com.wangpw.coolweather.app.util.HttpCallbackListener;
 import com.wangpw.coolweather.app.util.HttpUtil;
 import com.wangpw.coolweather.app.util.Utility;
 
+import android.R.bool;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -76,13 +77,20 @@ public class ChooseAreaActivity extends Activity {
 	 * 当前选中级别
 	 */
 	private int currentLevel;
-
+	/*
+	 * 是否从WeatherActivity跳转过来
+	 */
+	private boolean isFromWeatherActivity;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		isFromWeatherActivity = getIntent()
+				.getBooleanExtra("from_weather_activity", false);
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
-		if(prefs.getBoolean("city_selected", false)){
+		//只有在已经选择了城市，且不是从WeatherActivity中回来的才会直接启动WeatherActivity
+		//否则重新初始化ChooseActivity
+		if(prefs.getBoolean("city_selected", false)&&!isFromWeatherActivity){
 			Intent intent = new Intent(this, WeatherActivity.class);
 			startActivity(intent);
 			finish();

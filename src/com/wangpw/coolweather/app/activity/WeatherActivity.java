@@ -10,17 +10,20 @@ import com.wangpw.coolweather.app.util.StringUtil;
 import com.wangpw.coolweather.app.util.Utility;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class WeatherActivity extends Activity {
+public class WeatherActivity extends Activity implements OnClickListener {
 
 	private LinearLayout weatherInfoLayout;
 	private TextView cityNameTextView;
@@ -28,6 +31,8 @@ public class WeatherActivity extends Activity {
 	private TextView weatherDescTextView;
 	private TextView tempTextView;
 	private TextView currentDateTextView;
+	private Button switchCityButton;
+	private Button refreshWeatherButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,26 +52,34 @@ public class WeatherActivity extends Activity {
 			publishTimeTextView.setText("同步中...");
 			weatherInfoLayout.setVisibility(View.INVISIBLE);
 			cityNameTextView.setVisibility(View.INVISIBLE);
-			//将地区中带“区”字的部分去掉，以符合api接口的标准
-			String requestCountyName = StringUtil.cutStringToInt(countyName, "区");
-			//如果地区中带“县”字，且名字长度超过3，如“密云县”，也去掉“县”字
-			if(requestCountyName.length()>=3){
-				requestCountyName = StringUtil.cutStringToInt(countyName, "县");
-			}
-			//最后，将名字Utf-8编码
-			try {
-				requestCountyName = URLEncoder.encode(requestCountyName, "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			String address = "http://v.juhe.cn/weather/index?cityname="
-					+ requestCountyName + "&key=c9e11bd06c0d96e8cf8eede1507cfadf";
-			queryWeatherFromServer(address);
+			initialAddressThenSend(countyName);			
 		} else {
 			// 没有城市名称传过来，说明本地已经存储了数据，直接显示天气即可
 			showWeather();
 		}
+		switchCityButton = (Button)findViewById(R.id.btnSwitchCity);
+		refreshWeatherButton = (Button)findViewById(R.id.btnRefreshWeather);
+		switchCityButton.setOnClickListener(this);
+		refreshWeatherButton.setOnClickListener(this);
+	}
+	
+	private void initialAddressThenSend(String countyName){
+		//将地区中带“区”字的部分去掉，以符合api接口的标准
+		String requestCountyName = StringUtil.cutStringToInt(countyName, "区");
+		//如果地区中带“县”字，且名字长度超过3，如“密云县”，也去掉“县”字
+		if(requestCountyName.length()>=3){
+			requestCountyName = StringUtil.cutStringToInt(countyName, "县");
+		}
+		//最后，将名字Utf-8编码
+		try {
+			requestCountyName = URLEncoder.encode(requestCountyName, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String address = "http://v.juhe.cn/weather/index?cityname="
+				+ requestCountyName + "&key=c9e11bd06c0d96e8cf8eede1507cfadf";
+		queryWeatherFromServer(address);//地址初始化完成后发送地址
 	}
 
 	private void queryWeatherFromServer(String address) {
@@ -110,5 +123,28 @@ public class WeatherActivity extends Activity {
 		currentDateTextView.setText(prefs.getString("current_date", "未知"));
 		weatherInfoLayout.setVisibility(View.VISIBLE);
 		cityNameTextView.setVisibility(View.VISIBLE);
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.btnSwitchCity:
+			Intent intent = new Intent(this,ChooseAreaActivity.class);
+			intent.putExtra("from_weather_activity", true);//标记一下是从该Acitivty返回的，以便不再跳回来
+			startActivity(intent);
+			finish();
+			break;
+		case R.id.btnRefreshWeather:
+			publishTimeTextView.setText("同步中...");
+			SharedPreferences prefs = PreferenceManager
+					.getDefaultSharedPreferences(this);
+			String tempCountyName = prefs.getString("city_name", "");
+			if(!TextUtils.isEmpty(tempCountyName)){
+				initialAddressThenSend(tempCountyName);
+			}
+			break;
+		default:
+			break;
+		}
 	}
 }
